@@ -1,0 +1,6 @@
+{
+  "name": "GITAM Hostel Management",
+  "description": "A professional hostel management dashboard with secure Firestore storage for room allotment, student check-ins, and building configuration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

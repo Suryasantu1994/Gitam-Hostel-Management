@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "Building": {
+      "title": "Building",
+      "description": "Building configuration and floor metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "abbr": { "type": "string" },
+        "icon": { "type": "string" },
+        "colorClass": { "type": "string" },
+        "genderTag": { "type": "string" },
+        "nameClass": { "type": "string" },
+        "numClass": { "type": "string" },
+        "barClass": { "type": "string" },
+        "floors": { "type": "array" }
+      }
+    },
+    "CheckInRecord": {
+      "title": "CheckInRecord",
+      "description": "Details of current occupancy in a specific room",
+      "type": "object",
+      "properties": {
+        "students": { "type": "array" },
+        "studentIds": { "type": "array" },
+        "courses": { "type": "array" },
+        "years": { "type": "array" },
+        "contacts": { "type": "array" },
+        "parentCtcs": { "type": "array" },
+        "signatures": { "type": "array" },
+        "designations": { "type": "array" },
+        "amenities": { "type": "object" },
+        "checkinDates": { "type": "array" },
+        "checkoutDates": { "type": "array" },
+        "isReservedList": { "type": "array" },
+        "remarks": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "HistoricalRecord": {
+      "title": "HistoricalRecord",
+      "description": "Historical record of a single student's stay",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "buildingId": { "type": "string" },
+        "buildingName": { "type": "string" },
+        "roomNumber": { "type": "string" },
+        "studentName": { "type": "string" },
+        "studentId": { "type": "string" },
+        "course": { "type": "string" },
+        "year": { "type": "string" },
+        "designation": { "type": "string" },
+        "contact": { "type": "string" },
+        "parentContact": { "type": "string" },
+        "checkinDate": { "type": "string" },
+        "checkoutDate": { "type": "string" },
+        "signature": { "type": "string" },
+        "remarks": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/buildings/{buildingId}": {
+      "schema": "Building",
+      "description": "Global building definitions"
+    },
+    "/checkins/{checkInId}": {
+      "schema": "CheckInRecord",
+      "description": "Active check-in records for rooms"
+    },
+    "/history/{historyId}": {
+      "schema": "HistoricalRecord",
+      "description": "Historical records of all check-ins"
+    }
+  }
+}
