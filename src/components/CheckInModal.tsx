@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Building, CheckInRecord, HistoricalRecord } from '../types';
 import SignatureCanvas from 'react-signature-canvas';
-import { X, Check, Trash2, Pencil } from 'lucide-react';
+import { X, Check, Trash2, Pencil, Upload, Camera } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface CheckInModalProps {
@@ -131,6 +131,26 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
   };
 
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const newSigs = [...signatures];
+        newSigs[activeBedIdx] = base64String;
+        setSignatures(newSigs);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const triggerScan = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleBedCheckout = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -469,6 +489,14 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
                 <label className="block text-[10px] font-bold text-[#5a6472] uppercase mb-1.5 ml-1">
                   {isGuestHouse ? 'Guest Digital Signature' : 'Student Digital Signature'}
                 </label>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleFileUpload} 
+                  capture="environment" // Suggest using camera on mobile
+                />
                 {signatures[activeBedIdx] ? (
                   <div className="relative group bg-white border border-[#f0e8d8] rounded-2xl p-4 flex items-center justify-center">
                     <img src={signatures[activeBedIdx]} alt="Signature" className="max-h-24" />
@@ -488,7 +516,16 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
                       canvasProps={{ className: "w-full h-32 cursor-crosshair" }}
                     />
                     <div className="bg-[#f0e8d8]/30 px-4 py-2 flex items-center justify-between text-[10px] font-bold text-[#5a6472]">
-                      <span className="flex items-center gap-1.5"><Pencil size={10} /> SIGN HERE</span>
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1.5"><Pencil size={10} /> SIGN HERE</span>
+                        <div className="w-px h-3 bg-black/10 mx-1" />
+                        <button 
+                          onClick={triggerScan}
+                          className="flex items-center gap-1.5 text-[#0d6e6e] hover:text-[#084f4f] transition-colors"
+                        >
+                          <Camera size={12} /> SCAN SIGNATURE
+                        </button>
+                      </div>
                       <button onClick={clearSignature} className="hover:text-[#d94f3d]">CLEAR</button>
                     </div>
                   </div>

@@ -28,6 +28,7 @@ export default function App() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const [buildings, setBuildings] = useState<Record<string, Building>>(INITIAL_BUILDINGS);
   const [checkInData, setCheckInData] = useState<CheckInData>({});
@@ -126,6 +127,26 @@ export default function App() {
       await deleteDoc(doc(db, 'history', id));
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `history/${id}`);
+    }
+  };
+
+  const handleLogin = async () => {
+    setLoginError(null);
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        setLoginError('Sign-in window was closed before completion. Please try again.');
+      } else if (error.code === 'auth/cancelled-by-user') {
+        setLoginError('Sign-in was cancelled. Please try again.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        setLoginError('This domain is not authorized in Firebase Console. Please add gitam-hotel-management.vercel.app to "Authorized domains" in your Firebase Project settings.');
+      } else if (error.code === 'auth/popup-blocked') {
+        setLoginError('Sign-in popup was blocked by your browser. Please allow popups for this site and try again.');
+      } else {
+        setLoginError('An unexpected error occurred during sign-in. Please try again.');
+        console.error('Login error:', error);
+      }
     }
   };
 
@@ -237,8 +258,16 @@ export default function App() {
               <p className="text-[#5a6472] mb-10 leading-relaxed text-sm">
                 Hostel Management System is protected by end-to-end encryption. Please authenticate with GITAM credentials to proceed.
               </p>
+
+              {loginError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full shrink-0" />
+                  {loginError}
+                </div>
+              )}
+
               <button 
-                onClick={() => signInWithGoogle()}
+                onClick={handleLogin}
                 className="w-full bg-[#c9922a] hover:bg-[#b07d20] text-white py-4 px-6 rounded-2xl flex items-center justify-center gap-3 font-bold transition-all shadow-lg active:scale-95"
               >
                 <LogIn size={20} />
