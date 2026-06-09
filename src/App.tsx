@@ -140,7 +140,8 @@ export default function App() {
       } else if (error.code === 'auth/cancelled-by-user') {
         setLoginError('Sign-in was cancelled. Please try again.');
       } else if (error.code === 'auth/unauthorized-domain') {
-        setLoginError('This domain is not authorized in Firebase Console. Please add gitam-hotel-management.vercel.app to "Authorized domains" in your Firebase Project settings.');
+        const domain = window.location.hostname;
+        setLoginError(`This domain (${domain}) is not authorized in Firebase Console. Please add it to "Authorized domains" in your Firebase Project settings.`);
       } else if (error.code === 'auth/popup-blocked') {
         setLoginError('Sign-in popup was blocked by your browser. Please allow popups for this site and try again.');
       } else {

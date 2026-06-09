@@ -5,6 +5,9 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // If deploying to GitHub Pages at a sub-path, set 'base' to your repository name.
+    // Example: base: '/Gitam-Hostel-Management/',
+    base: process.env.VITE_BASE || '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
