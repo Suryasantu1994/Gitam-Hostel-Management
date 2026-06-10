@@ -54,6 +54,7 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
           checkinDate: r.checkinDate,
           checkoutDate: today,
           signature: r.signature || undefined,
+          roomType: r.roomType,
           remarks: currentRecord.remarks
         });
       }
@@ -156,8 +157,8 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
 
   const exportCSV = () => {
     if (!filtered.length) return;
-    const hdrs = ['Student Name', 'Roll No.', 'Course', 'Year', 'Building', 'Room', 'Bed', 'Check-In', 'Status'];
-    const rows = filtered.map(r => [r.name, r.studentId, r.course, r.year, r.building, r.rno, r.bed, r.checkinDate, r.isReserved ? 'Reserved' : 'Active']);
+    const hdrs = ['Student Name', 'Roll No.', 'Course', 'Year', 'Building', 'Room', 'Room Type', 'Bed', 'Check-In', 'Status'];
+    const rows = filtered.map(r => [r.name, r.studentId, r.course, r.year, r.building, r.rno, r.roomType, r.bed, r.checkinDate, r.isReserved ? 'Reserved' : 'Active']);
     const csv = [hdrs, ...rows].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -239,6 +240,7 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Roll No.</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Location</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Room Info</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Type</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Check-In</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Status</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Actions</th>
@@ -268,6 +270,11 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
                   <td className="px-6 py-4">
                     <p className="text-sm font-bold text-[#0d6e6e]">Room {r.rno}</p>
                     <p className="text-[10px] text-[#5a6472] uppercase tracking-wide">Bed {r.bed} · {r.category}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-[10px] font-bold text-[#c9922a] uppercase bg-[#fdf8f0] px-2 py-1 rounded-md border border-[#f0e8d8]">
+                      {r.roomType || 'STANDARD'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-xs text-[#1a1a2e] font-medium">
                     {r.checkinDate || '—'}
@@ -309,7 +316,7 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-20 text-center">
+                  <td colSpan={8} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-16 h-16 bg-[#fdf8f0] rounded-full flex items-center justify-center text-3xl text-gray-300">📋</div>
                       <p className="text-sm font-medium text-[#5a6472]">No records found.</p>

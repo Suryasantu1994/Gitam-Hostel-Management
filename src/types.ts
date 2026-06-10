@@ -65,6 +65,7 @@ export interface HistoricalRecord {
   checkinDate: string;
   checkoutDate: string;
   signature?: string;
+  roomType?: string;
   remarks?: string;
 }
 

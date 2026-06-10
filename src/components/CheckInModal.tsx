@@ -172,6 +172,7 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
         checkinDate: checkinDates[activeBedIdx],
         checkoutDate: today,
         signature: signatures[activeBedIdx] || undefined,
+        roomType: meta.type,
         remarks: remarks
       });
     }

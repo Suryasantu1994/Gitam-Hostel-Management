@@ -200,6 +200,9 @@ function RoomTile({ rno, meta, occ, onClick, buildingId }: { rno: string, meta: 
       )}
     >
       <span className="text-lg font-bold">{rno}</span>
+      <span className={cn("text-[7px] font-black px-1.5 py-0.5 rounded-sm bg-black/5 mb-0.5 uppercase tracking-tighter truncate max-w-full", status === 'vacant' ? "text-[#5a6472]" : "text-white/90 bg-white/10")}>
+        {meta.type || 'STAND'}
+      </span>
       <span className={cn("text-[9px] font-bold opacity-80 uppercase", status === 'vacant' ? "text-[#5a6472]" : "text-white")}>
         {occ} / {cap}
       </span>

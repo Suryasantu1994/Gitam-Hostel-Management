@@ -30,12 +30,13 @@ export default function HistoryView({ history, buildings, onDelete }: HistoryVie
 
   const exportCSV = () => {
     if (!filtered.length) return;
-    const headers = ['Name', 'ID/Designation', 'Building', 'Room', 'Department/Course', 'Year', 'Check-In', 'Check-Out'];
+    const headers = ['Name', 'ID/Designation', 'Building', 'Room', 'Room Type', 'Department/Course', 'Year', 'Check-In', 'Check-Out'];
     const rows = filtered.map(r => [
       r.studentName, 
       r.designation || r.studentId, 
       r.buildingName, 
       r.roomNumber, 
+      r.roomType || '',
       r.course, 
       r.year, 
       r.checkinDate, 
@@ -113,6 +114,7 @@ export default function HistoryView({ history, buildings, onDelete }: HistoryVie
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Name & ID / Desig</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Location</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Room Info</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Type</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Check-In</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Check-Out</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Status</th>
@@ -147,6 +149,11 @@ export default function HistoryView({ history, buildings, onDelete }: HistoryVie
                       {r.course} {r.year ? `• Yr ${r.year}` : ''}
                     </div>
                   </td>
+                  <td className="px-6 py-4">
+                    <span className="text-[10px] font-bold text-[#c9922a] uppercase bg-[#fdf8f0] px-2 py-1 rounded-md border border-[#f0e8d8]">
+                      {r.roomType || 'STANDARD'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-xs text-[#1a1a2e] font-medium">
                     {r.checkinDate || '—'}
                   </td>
@@ -176,7 +183,7 @@ export default function HistoryView({ history, buildings, onDelete }: HistoryVie
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-50 mb-3 text-gray-400">
                       <Search size={24} />
                     </div>
