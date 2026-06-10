@@ -578,17 +578,18 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
         </div>
 
         {/* Footer */}
-        <div className="p-6 bg-[#fdf8f0] border-t border-[#f0e8d8] flex justify-end gap-3 rounded-b-3xl">
+        <div className="p-6 bg-[#fdf8f0] border-t border-[#f0e8d8] flex items-center justify-end gap-4 rounded-b-3xl">
           <button 
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl text-sm font-bold text-[#5a6472] hover:bg-black/5 transition-colors"
+            className="px-6 py-3 rounded-2xl text-sm font-bold text-[#5a6472] hover:bg-black/5 transition-all active:scale-95"
           >
             Cancel
           </button>
           <button 
             onClick={handleSave}
-            className="px-8 py-2.5 bg-linear-to-r from-[#084f4f] to-[#0d6e6e] rounded-xl text-sm font-bold text-white shadow-lg shadow-[#0d6e6e]/20"
+            className="flex-1 sm:flex-none px-10 py-3 bg-linear-to-r from-[#084f4f] to-[#0d6e6e] rounded-2xl text-sm font-bold text-white shadow-xl shadow-[#0d6e6e]/20 hover:shadow-[#0d6e6e]/40 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5"
           >
+            <Check size={18} />
             Confirm Check-In
           </button>
         </div>

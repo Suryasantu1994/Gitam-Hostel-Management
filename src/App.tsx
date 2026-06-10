@@ -19,6 +19,7 @@ import HistoryView from './components/History';
 import { Home, ClipboardList, Settings, ShieldCheck, History, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import logo from './assets/images/gitam_official_logo_1781087797030.png';
 import { auth, db, signInWithGoogle, logout, OperationType, handleFirestoreError } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
@@ -251,33 +252,84 @@ export default function App() {
           </div>
         ) : !user ? (
           <div className="flex flex-col items-center justify-center py-20 px-6">
-            <div className="bg-white p-12 rounded-[40px] shadow-2xl border border-[#f0e8d8] max-w-md w-full text-center">
-              <div className="w-24 h-24 bg-linear-to-br from-[#084f4f] to-[#14a0a0] rounded-[30px] flex items-center justify-center mx-auto mb-8 shadow-xl">
-                <ShieldCheck size={48} className="text-white" />
-              </div>
-              <h2 className="font-serif text-3xl mb-3 text-[#0d6e6e]">Restricted Access</h2>
-              <p className="text-[#5a6472] mb-10 leading-relaxed text-sm">
-                Hostel Management System is protected by end-to-end encryption. Please authenticate with GITAM credentials to proceed.
-              </p>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="bg-white p-12 rounded-[40px] shadow-2xl border border-[#f0e8d8] max-w-md w-full text-center relative overflow-hidden"
+            >
+              <motion.div 
+                initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
+                animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                transition={{ 
+                  delay: 0.2, 
+                  duration: 0.8, 
+                  type: "spring",
+                  stiffness: 100,
+                  damping: 10
+                }}
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                className="mb-8 flex justify-center"
+              >
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-[#0d6e6e] blur-3xl opacity-20 group-hover:opacity-30 transition-opacity" />
+                  <motion.img 
+                    animate={{ 
+                      y: [0, -8, 0],
+                    }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    src={logo} 
+                    alt="GITAM University Logo" 
+                    className="w-48 h-48 rounded-full shadow-2xl relative z-10 border-[6px] border-white object-contain bg-white p-4"
+                  />
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="w-16 h-1 w-full max-w-[60px] bg-[#c9922a] mx-auto mb-6 rounded-full opacity-30" />
+                <h2 className="font-serif text-3xl mb-3 text-[#0d6e6e]">Restricted Access</h2>
+                <p className="text-[#5a6472] mb-10 leading-relaxed text-sm">
+                  Hostel Management System is protected by end-to-end encryption. Please authenticate with GITAM credentials to proceed.
+                </p>
+              </motion.div>
 
               {loginError && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2"
+                >
                   <div className="w-1.5 h-1.5 bg-red-500 rounded-full shrink-0" />
                   {loginError}
-                </div>
+                </motion.div>
               )}
 
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleLogin}
-                className="w-full bg-[#c9922a] hover:bg-[#b07d20] text-white py-4 px-6 rounded-2xl flex items-center justify-center gap-3 font-bold transition-all shadow-lg active:scale-95"
+                className="w-full bg-[#c9922a] hover:bg-[#b07d20] text-white py-4 px-6 rounded-2xl flex items-center justify-center gap-3 font-bold transition-all shadow-lg shadow-[#c9922a]/20"
               >
                 <LogIn size={20} />
                 Sign in with Google
-              </button>
-            </div>
-            <div className="mt-8 text-center">
+              </motion.button>
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="mt-8 text-center"
+            >
               <p className="text-[10px] text-[#5a6472]/50 uppercase tracking-[4px]">Powered by Google Firebase Enterprise</p>
-            </div>
+            </motion.div>
           </div>
         ) : (
           <AnimatePresence mode="wait">
