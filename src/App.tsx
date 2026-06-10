@@ -20,8 +20,8 @@ import { Home, ClipboardList, Settings, ShieldCheck, History, LogIn, LogOut, Use
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import logo from './assets/images/gitam_official_logo_1781087797030.png';
-import { auth, db, signInWithGoogle, signInWithGoogleRedirect, logout, OperationType, handleFirestoreError } from './lib/firebase';
-import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
+import { auth, db, signInWithGoogle, logout, OperationType, handleFirestoreError } from './lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 
 export default function App() {
@@ -37,18 +37,6 @@ export default function App() {
 
   // Auth Listener
   useEffect(() => {
-    // Check for redirect result first
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          setUser(result.user);
-        }
-      })
-      .catch((error) => {
-        console.error("Redirect login error:", error);
-        setLoginError("Failed to complete sign-in via redirect. Please try again.");
-      });
-
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setAuthLoading(false);
@@ -146,32 +134,20 @@ export default function App() {
   const handleLogin = async () => {
     setLoginError(null);
     try {
-      // For Median.co/WebViews, we try popup first, but if it fails or if we want better stability
-      // we might want to prioritize redirect.
       await signInWithGoogle();
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
-        setLoginError('Sign-in window was closed before completion.');
+        setLoginError('Sign-in window was closed before completion. Please try again.');
       } else if (error.code === 'auth/cancelled-by-user') {
-        setLoginError('Sign-in was cancelled.');
+        setLoginError('Sign-in was cancelled. Please try again.');
       } else if (error.code === 'auth/unauthorized-domain') {
         const domain = window.location.hostname;
-        setLoginError(`Domain (${domain}) is not authorized. Please add it to "Authorized domains" in Firebase settings.`);
-      } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/internal-error') {
-        // Fallback to redirect if popup is blocked or in environments that don't support popups
-        console.log('Popup blocked or failed, trying redirect...');
-        try {
-          await signInWithGoogleRedirect();
-        } catch (redirectError) {
-          setLoginError('Sign-in popup was blocked and redirect fallback failed. Please check your browser settings.');
-        }
+        setLoginError(`This domain (${domain}) is not authorized in Firebase Console. Please add it to "Authorized domains" in your Firebase Project settings.`);
+      } else if (error.code === 'auth/popup-blocked') {
+        setLoginError('Sign-in popup was blocked by your browser. Please allow popups for this site and try again.');
       } else {
-        setLoginError('An unexpected error occurred. Trying alternative sign-in...');
-        try {
-          await signInWithGoogleRedirect();
-        } catch (redirectError) {
-          console.error('All login methods failed:', error);
-        }
+        setLoginError('An unexpected error occurred during sign-in. Please try again.');
+        console.error('Login error:', error);
       }
     }
   };
