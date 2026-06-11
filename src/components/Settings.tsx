@@ -4,16 +4,18 @@
  */
 
 import { useState } from 'react';
-import { Building, Floor, RoomMeta } from '../types';
-import { ChevronDown, Plus, Trash2, Save, RotateCcw, Building2, X } from 'lucide-react';
+import { Building, Floor, RoomMeta, UserProfile } from '../types';
+import { ChevronDown, Plus, Trash2, Save, RotateCcw, Building2, X, Users, Shield, ShieldOff } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface SettingsProps {
   buildings: Record<string, Building>;
   onUpdateBuildings: (buildings: Record<string, Building>) => void;
+  users: UserProfile[];
+  onUpdateUser: (user: UserProfile) => void;
 }
 
-export default function SettingsView({ buildings, onUpdateBuildings }: SettingsProps) {
+export default function SettingsView({ buildings, onUpdateBuildings, users, onUpdateUser }: SettingsProps) {
   const [editedBuildings, setEditedBuildings] = useState<Record<string, Building>>(JSON.parse(JSON.stringify(buildings)));
   const [openBldId, setOpenBldIdx] = useState<string | null>(null);
   const [individualEditFloor, setIndividualEditFloor] = useState<string | null>(null); // "bldId-floorIdx"
@@ -185,6 +187,53 @@ export default function SettingsView({ buildings, onUpdateBuildings }: SettingsP
           >
             <Save size={16} /> Save Changes
           </button>
+        </div>
+      </div>
+      
+      {/* User Management Section */}
+      <div className="bg-white rounded-3xl border border-[#f0e8d8] shadow-xl overflow-hidden p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-sm font-bold text-[#0d6e6e] uppercase tracking-widest flex items-center gap-2">
+            <Users size={18} /> User Management
+          </h3>
+          <span className="text-[10px] text-[#5a6472] uppercase font-bold tracking-widest bg-[#fdf8f0] px-3 py-1 rounded-full border border-[#f0e8d8]">
+            {users.length} Active Users
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {users.map(u => (
+            <div key={u.uid} className="bg-[#fdf8f0]/30 border border-[#f0e8d8] rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#0d6e6e]/10 rounded-xl flex items-center justify-center text-[#0d6e6e]">
+                  <Users size={20} />
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-sm font-bold text-[#1a1a2e] truncate">{u.email}</p>
+                  <p className="text-[10px] text-[#5a6472] uppercase font-semibold">
+                    {u.isAdmin ? 'Administrator' : 'Staff / Staff User'}
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => {
+                  onUpdateUser({ ...u, isAdmin: !u.isAdmin });
+                }}
+                disabled={u.email.toLowerCase() === 'vkatakam@gitam.edu'}
+                className={cn(
+                  "p-2 rounded-xl transition-all",
+                  u.isAdmin 
+                    ? "bg-[#d94f3d]/10 text-[#d94f3d] hover:bg-[#d94f3d] hover:text-white"
+                    : "bg-[#0d6e6e]/10 text-[#0d6e6e] hover:bg-[#0d6e6e] hover:text-white",
+                  u.email.toLowerCase() === 'vkatakam@gitam.edu' && "opacity-50 cursor-not-allowed"
+                )}
+                title={u.isAdmin ? "Remove Admin Access" : "Grant Admin Access"}
+              >
+                {u.isAdmin ? <ShieldOff size={18} /> : <Shield size={18} />}
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -10,7 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import { INITIAL_BUILDINGS } from './data';
-import { Building, CheckInData, CheckInRecord, HistoricalRecord } from './types';
+import { Building, CheckInData, CheckInRecord, HistoricalRecord, UserProfile } from './types';
 import DashboardView from './components/Dashboard';
 import RoomsView from './components/RoomsView';
 import RecordsView from './components/Records';
@@ -20,25 +20,66 @@ import { Home, ClipboardList, Settings, ShieldCheck, History, LogIn, LogOut, Use
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import logo from './assets/images/gitam_official_logo_1781087797030.png';
-import { auth, db, signInWithGoogle, logout, OperationType, handleFirestoreError } from './lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth, db, signInWithGoogle, signInWithGoogleRedirect, logout, OperationType, handleFirestoreError } from './lib/firebase';
+import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'records' | 'settings' | 'history'>('dashboard');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [loginError, setLoginError] = useState<string | null>(null);
 
   const [buildings, setBuildings] = useState<Record<string, Building>>(INITIAL_BUILDINGS);
   const [checkInData, setCheckInData] = useState<CheckInData>({});
   const [history, setHistory] = useState<HistoricalRecord[]>([]);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
 
   // Auth Listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+    // Check for redirect result first
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          setUser(result.user);
+        }
+      })
+      .catch((error) => {
+        console.error("Redirect login error:", error);
+        setLoginError("Failed to complete sign-in via redirect. Please try again.");
+      });
+
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
+      if (u) {
+        const isDefaultAdmin = u.email?.toLowerCase() === 'vkatakam@gitam.edu';
+        if (isDefaultAdmin) setIsAdmin(true);
+
+        const userDocRef = doc(db, 'users', u.uid);
+        onSnapshot(userDocRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const profile = snapshot.data() as UserProfile;
+            setIsAdmin(profile.isAdmin || isDefaultAdmin);
+          } else {
+            setDoc(userDocRef, {
+              uid: u.uid,
+              email: u.email || '',
+              isAdmin: isDefaultAdmin
+            }).catch(e => handleFirestoreError(e, OperationType.WRITE, `users/${u.uid}`));
+            if (!isDefaultAdmin) setIsAdmin(false);
+          }
+        }, (error) => {
+          // If we can't read the profile, but we match the default admin, stay admin
+          if (!isDefaultAdmin) {
+            handleFirestoreError(error, OperationType.GET, `users/${u.uid}`);
+            setIsAdmin(false);
+          }
+        });
+      } else {
+        setIsAdmin(false);
+      }
       setAuthLoading(false);
     });
     return () => unsubscribe();
@@ -95,6 +136,24 @@ export default function App() {
     };
   }, [user]);
 
+  // Sync Users (Admins only)
+  useEffect(() => {
+    if (!user || !isAdmin) {
+      setAllUsers([]);
+      return;
+    }
+
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const users: UserProfile[] = [];
+      snapshot.forEach(doc => {
+        users.push(doc.data() as UserProfile);
+      });
+      setAllUsers(users);
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'users'));
+
+    return () => unsubUsers();
+  }, [user, isAdmin]);
+
   const handleUpdateCheckIn = async (buildingId: string, roomNumber: string, record: CheckInRecord) => {
     const id = `${buildingId}_${roomNumber}`;
     try {
@@ -111,6 +170,14 @@ export default function App() {
       }
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'buildings');
+    }
+  };
+
+  const handleUpdateUser = async (profile: UserProfile) => {
+    try {
+      await setDoc(doc(db, 'users', profile.uid), profile);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `users/${profile.uid}`);
     }
   };
 
@@ -134,20 +201,32 @@ export default function App() {
   const handleLogin = async () => {
     setLoginError(null);
     try {
+      // For Median.co/WebViews, we try popup first, but if it fails or if we want better stability
+      // we might want to prioritize redirect.
       await signInWithGoogle();
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
-        setLoginError('Sign-in window was closed before completion. Please try again.');
+        setLoginError('Sign-in window was closed before completion.');
       } else if (error.code === 'auth/cancelled-by-user') {
-        setLoginError('Sign-in was cancelled. Please try again.');
+        setLoginError('Sign-in was cancelled.');
       } else if (error.code === 'auth/unauthorized-domain') {
         const domain = window.location.hostname;
-        setLoginError(`This domain (${domain}) is not authorized in Firebase Console. Please add it to "Authorized domains" in your Firebase Project settings.`);
-      } else if (error.code === 'auth/popup-blocked') {
-        setLoginError('Sign-in popup was blocked by your browser. Please allow popups for this site and try again.');
+        setLoginError(`Domain (${domain}) is not authorized. Please add it to "Authorized domains" in Firebase settings.`);
+      } else if (error.code === 'auth/popup-blocked' || error.code === 'auth/internal-error') {
+        // Fallback to redirect if popup is blocked or in environments that don't support popups
+        console.log('Popup blocked or failed, trying redirect...');
+        try {
+          await signInWithGoogleRedirect();
+        } catch (redirectError) {
+          setLoginError('Sign-in popup was blocked and redirect fallback failed. Please check your browser settings.');
+        }
       } else {
-        setLoginError('An unexpected error occurred during sign-in. Please try again.');
-        console.error('Login error:', error);
+        setLoginError('An unexpected error occurred. Trying alternative sign-in...');
+        try {
+          await signInWithGoogleRedirect();
+        } catch (redirectError) {
+          console.error('All login methods failed:', error);
+        }
       }
     }
   };
@@ -157,7 +236,7 @@ export default function App() {
     ...(selectedBuildingId ? [{ label: buildings[selectedBuildingId]?.name || selectedBuildingId, active: true }] : []),
     ...(activeTab === 'records' ? [{ label: 'Records', icon: <ClipboardList size={14} />, active: true }] : []),
     ...(activeTab === 'history' ? [{ label: 'Room History', icon: <History size={14} />, active: true }] : []),
-    ...(activeTab === 'settings' ? [{ label: 'Settings', icon: <Settings size={14} />, active: true }] : []),
+    ...(activeTab === 'settings' && isAdmin ? [{ label: 'Settings', icon: <Settings size={14} />, active: true }] : []),
   ];
 
   return (
@@ -191,12 +270,14 @@ export default function App() {
             label="History"
             icon={<History size={16} />}
           />
-          <TabButton 
-            active={activeTab === 'settings'} 
-            onClick={() => setActiveTab('settings')}
-            label="Settings"
-            icon={<Settings size={16} />}
-          />
+          {isAdmin && (
+            <TabButton 
+              active={activeTab === 'settings'} 
+              onClick={() => setActiveTab('settings')}
+              label="Settings"
+              icon={<Settings size={16} />}
+            />
+          )}
         </nav>
 
         <div className="flex items-center gap-4">
@@ -223,7 +304,9 @@ export default function App() {
         <button onClick={() => { setActiveTab('dashboard'); setSelectedBuildingId(null); }} className={cn("p-2 text-white/60", activeTab === 'dashboard' && "text-white")}><Home size={20} /></button>
         <button onClick={() => setActiveTab('records')} className={cn("p-2 text-white/60", activeTab === 'records' && "text-white")}><ClipboardList size={20} /></button>
         <button onClick={() => setActiveTab('history')} className={cn("p-2 text-white/60", activeTab === 'history' && "text-white")}><History size={20} /></button>
-        <button onClick={() => setActiveTab('settings')} className={cn("p-2 text-white/60", activeTab === 'settings' && "text-white")}><Settings size={20} /></button>
+        {isAdmin && (
+          <button onClick={() => setActiveTab('settings')} className={cn("p-2 text-white/60", activeTab === 'settings' && "text-white")}><Settings size={20} /></button>
+        )}
       </nav>
 
       {/* Breadcrumbs */}
@@ -403,7 +486,7 @@ export default function App() {
               </motion.div>
             )}
 
-            {activeTab === 'settings' && (
+            {activeTab === 'settings' && isAdmin && (
               <motion.div
                 key="settings"
                 initial={{ opacity: 0, y: 10 }}
@@ -414,7 +497,27 @@ export default function App() {
                 <SettingsView 
                   buildings={buildings} 
                   onUpdateBuildings={handleUpdateBuildings}
+                  users={allUsers}
+                  onUpdateUser={handleUpdateUser}
                 />
+              </motion.div>
+            )}
+            {activeTab === 'settings' && !isAdmin && (
+              <motion.div
+                key="unauthorized"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center py-20"
+              >
+                <ShieldCheck size={48} className="text-[#c9922a] mb-4" />
+                <h2 className="text-xl font-serif text-[#0d6e6e] mb-2">Admin Access Only</h2>
+                <p className="text-[#5a6472] mb-6">You don't have permission to access the settings panel.</p>
+                <button 
+                  onClick={() => setActiveTab('dashboard')}
+                  className="bg-[#0d6e6e] text-white px-6 py-2 rounded-xl text-sm font-bold"
+                >
+                  Return to Dashboard
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

@@ -69,4 +69,10 @@ export interface HistoricalRecord {
   remarks?: string;
 }
 
+export interface UserProfile {
+  uid: string;
+  email: string;
+  isAdmin: boolean;
+}
+
 export type CheckInData = Record<string, CheckInRecord>; // Keyed by `${buildingId}_${roomNumber}`
