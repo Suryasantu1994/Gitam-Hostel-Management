@@ -16,10 +16,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && 
-             request.auth.token != null &&
-             'email' in request.auth.token &&
-             (request.auth.token.email.lower() == 'vkatakam@gitam.edu' || request.auth.uid == '2bEghd98c7R9gl6pYm6HErrjW7w2');
+      return isSignedIn() && (
+        (request.auth.token != null && 'email' in request.auth.token && request.auth.token.email.lower() == 'vkatakam@gitam.edu') ||
+        (request.auth.uid == '2bEghd98c7R9gl6pYm6HErrjW7w2') ||
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
+      );
     }
 
     function isValidId(id) {

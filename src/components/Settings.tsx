@@ -21,11 +21,15 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
   const [individualEditFloor, setIndividualEditFloor] = useState<string | null>(null); // "bldId-floorIdx"
   const [newAmenInput, setNewAmenInput] = useState('');
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+
   const handleBldFieldChange = (id: string, field: keyof Building, value: string) => {
     setEditedBuildings(prev => ({
       ...prev,
       [id]: { ...prev[id], [field]: value }
     }));
+    setSaveStatus('idle');
   };
 
   const handleRoomMetaChange = (bldId: string, floorIdx: number, roomNumber: string, metaKey: keyof RoomMeta, value: any) => {
@@ -44,6 +48,7 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
       }
       return next;
     });
+    setSaveStatus('idle');
   };
 
   const handleAddAmenityToFloor = (bldId: string, floorIdx: number, amen: string) => {
@@ -60,6 +65,7 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
       });
       return next;
     });
+    setSaveStatus('idle');
   };
 
   const handleRemoveAmenityFromFloor = (bldId: string, floorIdx: number, amen: string) => {
@@ -73,6 +79,7 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
       });
       return next;
     });
+    setSaveStatus('idle');
   };
 
   const handleFloorMetaChange = (bldId: string, floorIdx: number, metaKey: keyof RoomMeta, value: any) => {
@@ -88,6 +95,7 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
       
       return next;
     });
+    setSaveStatus('idle');
   };
 
   const handleRoomsChange = (bldId: string, floorIdx: number, roomsStr: string) => {
@@ -112,6 +120,7 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
       floor.roomMeta = newMeta;
       return next;
     });
+    setSaveStatus('idle');
   };
 
   const addFloor = (bldId: string) => {
@@ -122,6 +131,7 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
       bld.floors.push({ floor: maxFloor + 1, rooms: [], roomMeta: {} });
       return next;
     });
+    setSaveStatus('idle');
   };
 
   const removeFloor = (bldId: string, floorIdx: number) => {
@@ -130,6 +140,7 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
       next[bldId].floors.splice(floorIdx, 1);
       return next;
     });
+    setSaveStatus('idle');
   };
 
   const addBuilding = () => {
@@ -150,6 +161,7 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
       }
     }));
     setOpenBldIdx(id);
+    setSaveStatus('idle');
   };
 
   const removeBuilding = (id: string) => {
@@ -159,12 +171,23 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
         delete next[id];
         return next;
       });
+      setSaveStatus('idle');
     }
   };
 
-  const saveAll = () => {
-    onUpdateBuildings(editedBuildings);
-    alert('Settings saved successfully!');
+  const saveAll = async () => {
+    try {
+      setIsSaving(true);
+      setSaveStatus('saving');
+      await onUpdateBuildings(editedBuildings);
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch (error) {
+      console.error("Save failed:", error);
+      setSaveStatus('error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -174,18 +197,36 @@ export default function SettingsView({ buildings, onUpdateBuildings, users, onUp
           <h2 className="font-serif text-3xl text-[#084f4f] mb-1">⚙️ Settings</h2>
           <p className="text-[#5a6472]">Manage building structures, floors, and room configurations.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          {saveStatus === 'success' && (
+            <span className="text-xs font-bold text-green-600 animate-pulse">Changes Saved!</span>
+          )}
+          {saveStatus === 'error' && (
+            <span className="text-xs font-bold text-red-600">Failed to Save</span>
+          )}
           <button 
-            onClick={() => setEditedBuildings(JSON.parse(JSON.stringify(buildings)))}
-            className="px-4 py-2.5 bg-white border border-[#f0e8d8] rounded-xl text-sm font-bold text-[#5a6472] flex items-center gap-2 hover:bg-black/5"
+            onClick={() => {
+              setEditedBuildings(JSON.parse(JSON.stringify(buildings)));
+              setSaveStatus('idle');
+            }}
+            disabled={isSaving}
+            className="px-4 py-2.5 bg-white border border-[#f0e8d8] rounded-xl text-sm font-bold text-[#5a6472] flex items-center gap-2 hover:bg-black/5 disabled:opacity-50"
           >
             <RotateCcw size={16} /> Reset
           </button>
           <button 
             onClick={saveAll}
-            className="px-6 py-2.5 bg-[#0d6e6e] text-white rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#0d6e6e]/20"
+            disabled={isSaving}
+            className={cn(
+              "px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg transition-all",
+              saveStatus === 'saving' ? "bg-[#5a6472] text-white" : "bg-[#0d6e6e] text-white shadow-[#0d6e6e]/20",
+              isSaving && "opacity-80 cursor-wait"
+            )}
           >
-            <Save size={16} /> Save Changes
+            {isSaving ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : <Save size={16} />}
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
