@@ -55,7 +55,8 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
           checkoutDate: today,
           signature: r.signature || undefined,
           roomType: r.roomType,
-          remarks: currentRecord.remarks
+          remarks: currentRecord.remarks,
+          laundryEligible: (currentRecord.laundryEligibleList || [])[r.bedIdx]
         });
       }
 
@@ -78,6 +79,7 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
       newRecord.checkinDates = normalizeArray(newRecord.checkinDates, capacity);
       newRecord.checkoutDates = normalizeArray(newRecord.checkoutDates, capacity);
       newRecord.isReservedList = normalizeArray(newRecord.isReservedList, capacity, false);
+      newRecord.laundryEligibleList = normalizeArray(newRecord.laundryEligibleList || [], capacity, false);
 
       // Clear the specific bed
       newRecord.students[r.bedIdx] = '';
@@ -92,6 +94,8 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
       newRecord.checkinDates[r.bedIdx] = '';
       newRecord.checkoutDates[r.bedIdx] = today;
       newRecord.isReservedList[r.bedIdx] = false;
+      if (!newRecord.laundryEligibleList) newRecord.laundryEligibleList = [];
+      newRecord.laundryEligibleList[r.bedIdx] = false;
 
       newRecord.updatedAt = new Date().toISOString();
       
@@ -132,7 +136,8 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
             checkoutDate: (data.checkoutDates?.[i]) || (data.checkoutDate || ''),
             isReserved,
             status,
-            bedIdx: i
+            bedIdx: i,
+            laundryEligible: (data.laundryEligibleList || [])[i] || false
           };
         });
       });
@@ -157,8 +162,8 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
 
   const exportCSV = () => {
     if (!filtered.length) return;
-    const hdrs = ['Student Name', 'Roll No.', 'Course', 'Year', 'Building', 'Room', 'Room Type', 'Bed', 'Check-In', 'Status'];
-    const rows = filtered.map(r => [r.name, r.studentId, r.course, r.year, r.building, r.rno, r.roomType, r.bed, r.checkinDate, r.isReserved ? 'Reserved' : 'Active']);
+    const hdrs = ['Student Name', 'Roll No.', 'Course', 'Year', 'Building', 'Room', 'Room Type', 'Bed', 'Check-In', 'Laundry Pkg', 'Status'];
+    const rows = filtered.map(r => [r.name, r.studentId, r.course, r.year, r.building, r.rno, r.roomType, r.bed, r.checkinDate, r.laundryEligible ? 'Eligible' : 'Not Eligible', r.isReserved ? 'Reserved' : 'Active']);
     const csv = [hdrs, ...rows].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -242,6 +247,7 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Room Info</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Type</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Check-In</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Laundry</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Status</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Actions</th>
               </tr>
@@ -278,6 +284,14 @@ export default function RecordsView({ buildings, checkInData, onUpdateCheckIn, o
                   </td>
                   <td className="px-6 py-4 text-xs text-[#1a1a2e] font-medium">
                     {r.checkinDate || '—'}
+                  </td>
+                  <td className="px-6 py-4 text-xs">
+                    <span className={cn(
+                      "px-2 py-1 rounded-md font-bold uppercase text-[9px]",
+                      r.laundryEligible ? "bg-green-50 text-green-600 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"
+                    )}>
+                      {r.laundryEligible ? 'Eligible' : 'Not Eligible'}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(

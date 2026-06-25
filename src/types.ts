@@ -42,6 +42,7 @@ export interface CheckInRecord {
   checkinDates: string[];
   checkoutDates: string[];
   isReservedList: boolean[];
+  laundryEligibleList?: boolean[];
   remarks: string;
   updatedAt: string;
   // Legacy fields (optional, but keeping for compatibility during transition if needed)
@@ -67,6 +68,7 @@ export interface HistoricalRecord {
   signature?: string;
   roomType?: string;
   remarks?: string;
+  laundryEligible?: boolean;
 }
 
 export interface UserProfile {

@@ -52,7 +52,8 @@ service cloud.firestore {
              data.amenities is map &&
              data.checkinDates is list &&
              data.checkoutDates is list &&
-             data.isReservedList is list;
+             data.isReservedList is list &&
+             (data.laundryEligibleList == null || data.laundryEligibleList is list);
     }
 
     function isValidHistoricalRecord(data) {
@@ -71,7 +72,8 @@ service cloud.firestore {
              data.parentContact is string &&
              data.roomType is string &&
              (data.remarks == null || data.remarks is string) &&
-             (data.signature == null || data.signature is string);
+             (data.signature == null || data.signature is string) &&
+             (data.laundryEligible == null || data.laundryEligible is bool);
     }
 
     function isValidBuilding(data) {

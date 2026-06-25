@@ -34,6 +34,7 @@
         "checkinDates": { "type": "array" },
         "checkoutDates": { "type": "array" },
         "isReservedList": { "type": "array" },
+        "laundryEligibleList": { "type": "array" },
         "remarks": { "type": "string" },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
@@ -57,7 +58,8 @@
         "checkinDate": { "type": "string" },
         "checkoutDate": { "type": "string" },
         "signature": { "type": "string" },
-        "remarks": { "type": "string" }
+        "remarks": { "type": "string" },
+        "laundryEligible": { "type": "boolean" }
       }
     },
     "UserProfile": {

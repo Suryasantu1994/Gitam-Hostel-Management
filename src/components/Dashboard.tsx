@@ -58,6 +58,55 @@ export default function Dashboard({ buildings, checkInData, onSelectBuilding }: 
     { name: 'Vacant', value: totalVacant, color: '#e8e0d0' }
   ];
 
+  // Laundry Stats
+  let laundryEligibleCount = 0;
+  let laundryNotEligibleCount = 0;
+
+  Object.values(checkInData).forEach(data => {
+    const students = data.students || [];
+    const laundryList = data.laundryEligibleList || [];
+    students.forEach((s, i) => {
+      if (s && s.trim()) {
+        if (laundryList[i]) {
+          laundryEligibleCount++;
+        } else {
+          laundryNotEligibleCount++;
+        }
+      }
+    });
+  });
+
+  const laundryTotal = laundryEligibleCount + laundryNotEligibleCount;
+  const laundryPieData = [
+    { name: 'Eligible', value: laundryEligibleCount, color: '#0d6e6e' },
+    { name: 'Not Eligible', value: laundryNotEligibleCount, color: '#d94f3d' }
+  ];
+
+  // Building-wise Laundry Stats
+  const buildingLaundryStats: Record<string, { name: string, eligible: number, notEligible: number }> = {};
+  Object.entries(checkInData).forEach(([key, data]) => {
+    const buildingId = key.split('_')[0];
+    const bldName = buildings[buildingId]?.name || buildingId;
+    
+    if (!buildingLaundryStats[buildingId]) {
+      buildingLaundryStats[buildingId] = { name: bldName, eligible: 0, notEligible: 0 };
+    }
+
+    const students = data.students || [];
+    const laundryList = data.laundryEligibleList || [];
+    students.forEach((s, i) => {
+      if (s && s.trim()) {
+        if (laundryList[i]) {
+          buildingLaundryStats[buildingId].eligible++;
+        } else {
+          buildingLaundryStats[buildingId].notEligible++;
+        }
+      }
+    });
+  });
+
+  const buildingLaundryChartData = Object.values(buildingLaundryStats);
+
   // Insight Categories
   const categoryStats: Record<string, { used: number, total: number }> = {};
   const typeStats: Record<string, { occupiedRooms: number, totalRooms: number, capacity: number, students: number }> = {};
@@ -376,6 +425,74 @@ export default function Dashboard({ buildings, checkInData, onSelectBuilding }: 
                   activeDot={{ r: 6 }} 
                 />
               </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#f0e8d8] p-6 shadow-sm">
+          <h3 className="text-sm font-bold text-[#0d6e6e] uppercase tracking-wider mb-6 flex items-center gap-2">
+            👕 Laundry Pkg Eligibility
+          </h3>
+          <div className="h-64 flex flex-col items-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={laundryPieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {laundryPieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-2 text-center">
+            <p className="text-[10px] font-bold text-[#5a6472] uppercase tracking-wider">
+              {laundryEligibleCount} Eligible · {laundryNotEligibleCount} Not Eligible
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#f0e8d8] p-6 shadow-sm md:col-span-2 lg:col-span-1">
+          <h3 className="text-sm font-bold text-[#0d6e6e] uppercase tracking-wider mb-6 flex items-center gap-2">
+            🏢 Laundry Eligibility by Building
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={buildingLaundryChartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e8d8" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 600, fill: '#5a6472' }}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 600, fill: '#5a6472' }}
+                />
+                <Tooltip 
+                  cursor={{ fill: '#fdf8f0' }}
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #f0e8d8', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                <Bar dataKey="eligible" name="Eligible" fill="#0d6e6e" radius={[4, 4, 0, 0]} barSize={20}>
+                  <LabelList dataKey="eligible" position="insideTop" style={{ fill: '#fff', fontSize: '9px', fontWeight: 'bold' }} />
+                </Bar>
+                <Bar dataKey="notEligible" name="Not Eligible" fill="#d94f3d" radius={[4, 4, 0, 0]} barSize={20}>
+                  <LabelList dataKey="notEligible" position="insideTop" style={{ fill: '#fff', fontSize: '9px', fontWeight: 'bold' }} />
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>

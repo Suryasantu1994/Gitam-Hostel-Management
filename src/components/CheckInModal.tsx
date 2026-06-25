@@ -100,6 +100,14 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
     const defaultValue = existingRecord?.isReserved || false;
     return Array(cap).fill(defaultValue);
   });
+  const [laundryEligibleList, setLaundryEligibleList] = useState<boolean[]>(() => {
+    if (existingRecord?.laundryEligibleList) {
+      const arr = [...existingRecord.laundryEligibleList];
+      while (arr.length < cap) arr.push(false);
+      return arr.slice(0, cap);
+    }
+    return Array(cap).fill(false);
+  });
   
   const [amenities, setAmenities] = useState<Record<string, boolean>>(existingRecord?.amenities || {});
   const [remarks, setRemarks] = useState(existingRecord?.remarks || '');
@@ -110,6 +118,7 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
     onSave({
       students, studentIds, courses, years, contacts, parentCtcs, signatures, designations,
       amenities, checkinDates, checkoutDates, remarks, isReservedList,
+      laundryEligibleList,
       updatedAt: new Date().toISOString()
     });
   };
@@ -173,7 +182,8 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
         checkoutDate: today,
         signature: signatures[activeBedIdx] || undefined,
         roomType: meta.type,
-        remarks: remarks
+        remarks: remarks,
+        laundryEligible: laundryEligibleList[activeBedIdx]
       });
     }
 
@@ -188,6 +198,7 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
     const newCDates = [...checkinDates];
     const newExDates = [...checkoutDates];
     const newRes = [...isReservedList];
+    const newLaundry = [...laundryEligibleList];
     
     newStudents[activeBedIdx] = '';
     newIds[activeBedIdx] = '';
@@ -200,6 +211,7 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
     newCDates[activeBedIdx] = '';
     newExDates[activeBedIdx] = today; // Mark current checkout date
     newRes[activeBedIdx] = false;
+    newLaundry[activeBedIdx] = false;
     
     setStudents(newStudents);
     setStudentIds(newIds);
@@ -212,6 +224,7 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
     setCheckinDates(newCDates);
     setCheckoutDates(newExDates);
     setIsReservedList(newRes);
+    setLaundryEligibleList(newLaundry);
 
     // Auto-save the checkout action to ensure persistence
     onSave({
@@ -228,6 +241,7 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
       checkoutDates: newExDates, 
       remarks, 
       isReservedList: newRes,
+      laundryEligibleList: newLaundry,
       updatedAt: new Date().toISOString()
     });
     onClose();
@@ -448,6 +462,44 @@ export default function CheckInModal({ isOpen, onClose, building, roomNumber, ex
                     }}
                   />
                 </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[#5a6472] uppercase mb-1.5 ml-1">Laundry Pkg Eligibility</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const next = [...laundryEligibleList];
+                        next[activeBedIdx] = true;
+                        setLaundryEligibleList(next);
+                      }}
+                      className={cn(
+                        "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border-1.5",
+                        laundryEligibleList[activeBedIdx]
+                          ? "bg-[#0d6e6e] border-[#0d6e6e] text-white"
+                          : "bg-white border-[#f0e8d8] text-[#5a6472] hover:border-[#0d6e6e]/50"
+                      )}
+                    >
+                      Eligible
+                    </button>
+                    <button
+                      onClick={() => {
+                        const next = [...laundryEligibleList];
+                        next[activeBedIdx] = false;
+                        setLaundryEligibleList(next);
+                      }}
+                      className={cn(
+                        "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border-1.5",
+                        !laundryEligibleList[activeBedIdx]
+                          ? "bg-[#d94f3d] border-[#d94f3d] text-white"
+                          : "bg-white border-[#f0e8d8] text-[#5a6472] hover:border-[#d94f3d]/50"
+                      )}
+                    >
+                      Not Eligible
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-[10px] font-bold text-[#5a6472] uppercase mb-1.5 ml-1">Expected Checkout</label>
                   <input 

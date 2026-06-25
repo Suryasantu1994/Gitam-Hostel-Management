@@ -30,7 +30,7 @@ export default function HistoryView({ history, buildings, onDelete }: HistoryVie
 
   const exportCSV = () => {
     if (!filtered.length) return;
-    const headers = ['Name', 'ID/Designation', 'Building', 'Room', 'Room Type', 'Department/Course', 'Year', 'Check-In', 'Check-Out'];
+    const headers = ['Name', 'ID/Designation', 'Building', 'Room', 'Room Type', 'Department/Course', 'Year', 'Check-In', 'Check-Out', 'Laundry Pkg'];
     const rows = filtered.map(r => [
       r.studentName, 
       r.designation || r.studentId, 
@@ -40,7 +40,8 @@ export default function HistoryView({ history, buildings, onDelete }: HistoryVie
       r.course, 
       r.year, 
       r.checkinDate, 
-      r.checkoutDate
+      r.checkoutDate,
+      r.laundryEligible ? 'Eligible' : 'Not Eligible'
     ]);
     const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].map(e => e.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
@@ -117,6 +118,7 @@ export default function HistoryView({ history, buildings, onDelete }: HistoryVie
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Type</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Check-In</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Check-Out</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Laundry</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Status</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-[#5a6472] uppercase tracking-widest border-b border-[#f0e8d8]">Actions</th>
               </tr>
@@ -159,6 +161,14 @@ export default function HistoryView({ history, buildings, onDelete }: HistoryVie
                   </td>
                   <td className="px-6 py-4 text-xs text-[#d94f3d] font-bold">
                     {r.checkoutDate || '—'}
+                  </td>
+                  <td className="px-6 py-4 text-xs">
+                    <span className={cn(
+                      "px-2 py-1 rounded-md font-bold uppercase text-[9px]",
+                      r.laundryEligible ? "bg-green-50 text-green-600 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"
+                    )}>
+                      {r.laundryEligible ? 'Eligible' : 'Not Eligible'}
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500">
