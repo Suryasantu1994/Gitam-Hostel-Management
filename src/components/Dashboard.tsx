@@ -107,6 +107,36 @@ export default function Dashboard({ buildings, checkInData, onSelectBuilding }: 
 
   const buildingLaundryChartData = Object.values(buildingLaundryStats);
 
+  // Category-wise Laundry Stats
+  const categoryLaundryStats: Record<string, { name: string, eligible: number, notEligible: number }> = {};
+  buildingArray.forEach(b => {
+    b.floors.forEach(f => {
+      Object.entries(f.roomMeta).forEach(([rno, meta]) => {
+        const cat = meta.category || 'Unknown';
+        if (!categoryLaundryStats[cat]) {
+          categoryLaundryStats[cat] = { name: cat, eligible: 0, notEligible: 0 };
+        }
+        
+        const rec = checkInData[`${b.id}_${rno}`];
+        if (rec) {
+          const students = rec.students || [];
+          const laundryList = rec.laundryEligibleList || [];
+          students.forEach((s, i) => {
+            if (s && s.trim()) {
+              if (laundryList[i]) {
+                categoryLaundryStats[cat].eligible++;
+              } else {
+                categoryLaundryStats[cat].notEligible++;
+              }
+            }
+          });
+        }
+      });
+    });
+  });
+
+  const categoryLaundryChartData = Object.values(categoryLaundryStats);
+
   // Insight Categories
   const categoryStats: Record<string, { used: number, total: number }> = {};
   const typeStats: Record<string, { occupiedRooms: number, totalRooms: number, capacity: number, students: number }> = {};
@@ -469,6 +499,41 @@ export default function Dashboard({ buildings, checkInData, onSelectBuilding }: 
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={buildingLaundryChartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e8d8" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 600, fill: '#5a6472' }}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 600, fill: '#5a6472' }}
+                />
+                <Tooltip 
+                  cursor={{ fill: '#fdf8f0' }}
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #f0e8d8', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Legend verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                <Bar dataKey="eligible" name="Eligible" fill="#0d6e6e" radius={[4, 4, 0, 0]} barSize={20}>
+                  <LabelList dataKey="eligible" position="insideTop" style={{ fill: '#fff', fontSize: '9px', fontWeight: 'bold' }} />
+                </Bar>
+                <Bar dataKey="notEligible" name="Not Eligible" fill="#d94f3d" radius={[4, 4, 0, 0]} barSize={20}>
+                  <LabelList dataKey="notEligible" position="insideTop" style={{ fill: '#fff', fontSize: '9px', fontWeight: 'bold' }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#f0e8d8] p-6 shadow-sm md:col-span-2 lg:col-span-1">
+          <h3 className="text-sm font-bold text-[#0d6e6e] uppercase tracking-wider mb-6 flex items-center gap-2">
+            👥 Laundry Eligibility by Category
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryLaundryChartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e8d8" />
                 <XAxis 
                   dataKey="name" 
